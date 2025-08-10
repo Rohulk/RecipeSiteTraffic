@@ -42,41 +42,32 @@ for col in nutrition_cols:
         'Max': df[col].max()
     })
     
-    # Handle missing values (median imputation)
     col_median = df[col].median()
     df[col] = df[col].fillna(col_median)
     
-    # Verify no negatives exist (set to abs value if found)
     if negatives > 0:
         print(f" Warning: {negatives} negative values found in {col}")
         df[col] = df[col].abs()
 
-# Display nutrition stats table
 print(pd.DataFrame(nutrition_stats).to_string(index=False))
 
-# 3. Category Validation
 print("\nCategory Column Validation:")
 valid_categories = ['Lunch/Snacks', 'Beverages', 'Potato', 'Vegetable', 'Meat', 
                    'Chicken', 'Pork', 'Dessert', 'Breakfast', 'One Dish Meal',
                    'Chicken Breast']  # From data description
 
-# Check for unexpected categories
 invalid_categories = set(df['category'].unique()) - set(valid_categories)
 if invalid_categories:
     print(f" Warning: {len(invalid_categories)} invalid categories found: {invalid_categories}")
 else:
     print("All categories are valid")
 
-# Check for missing categories
 missing_categories = df['category'].isnull().sum()
 print(f"  Missing categories: {missing_categories}")  # Should be 0
 
-# Servings Validation
 print("\nServings Column Validation:")
-# Convert to string first to handle any mixed types in the csv file
 df['servings'] = df['servings'].astype(str)
 
-# Extract numeric values 
 df['servings'] = df['servings'].str.extract('(\d+)').astype(float)
 
 # Check stats
@@ -85,22 +76,17 @@ print(f"- Range: {df['servings'].min()} to {df['servings'].max()}")
 print("- Value counts:")
 print(df['servings'].value_counts().sort_index())
 
-# Handle missing values (median imputation)
 servings_median = df['servings'].median()
 df['servings'] = df['servings'].fillna(servings_median)
 
-# Verify no zeros or negatives
 assert (df['servings'] > 0).all(), "Invalid servings values (≤0) found"
 
-# 5. High_traffic Validation
 print("\nHigh_traffic Column Validation:")
 print("- Value counts before cleaning:")
 print(df['high_traffic'].value_counts(dropna=False))
 
-# Convert to binary (1=High, 0=Not High)
 df['high_traffic'] = (df['high_traffic'] == 'High').astype(int)
 
-# Handle missing values (assuming NA means not high traffic)
 missing_traffic = df['high_traffic'].isnull().sum()
 if missing_traffic > 0:
     print(f"  Imputing {missing_traffic} missing values as 0 (Not High)")
@@ -120,12 +106,10 @@ print(df.isnull().sum())
 print("\nData types after cleaning:")
 print(df.dtypes)
 
-# Save cleaned data for reference
 df.to_csv("cleaned_recipe_data.csv", index=False)
 print("\nCleaned data saved to 'cleaned_recipe_data.csv'") #Created a cleaned data csv for viewing
 
 
-# EXPLORATORY DATA ANALYSIS 
 print("\nExploratory analysis: ")
 missing_before = [373, 52, 52, 52, 0, 0]  # high_traffic, calories, ..., servings
 missing_after = [0, 0, 0, 0, 0, 0]  
@@ -144,7 +128,6 @@ plt.grid(axis='y', alpha=0.3)
 plt.show()
 
 
-# This is my bar chart which is a single variable graph
 plt.figure(figsize=(12, 6))
 category_counts = df['category'].value_counts()
 ax = sns.barplot(x=category_counts.values, y=category_counts.index, palette='viridis')
@@ -181,13 +164,11 @@ plt.xticks([0, 1], ['Not High', 'High'])
 plt.grid(axis='y', alpha=0.3)
 plt.show()
 
-# Findings description
 print("\nSome of the key findings in those exploratory analysis I made were:")
 print("- High-traffic recipes tend to have higher median calories")
 print(f"- Most common categories: {category_counts.index[0]}, {category_counts.index[1]}, {category_counts.index[2]}")
 print("- Some extreme calorie outliers exist (>3000 calories)")
 
-# Model development 
 print("\nModel development:")
 
 # Prepare features
@@ -201,19 +182,16 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_
 
 print("Problem Type: Binary Classification (Predict High Traffic Recipes)")
 
-# Baseline Model (Logistic Regression)
 print("\nTraining Baseline Model like Logistic Regression")
 lr = LogisticRegression(max_iter=1000)
 lr.fit(X_train, y_train)
 y_pred_lr = lr.predict(X_test)
 
-# Comparison Model (Random Forest)
 print("\nTraining Comparison Model such as Random Forest")
 rf = RandomForestClassifier(n_estimators=100, random_state=42)
 rf.fit(X_train, y_train)
 y_pred_rf = rf.predict(X_test)
 
-# Model evaluation rounding it to 2 decimal places
 print("\nModel evaluation:")
 
 def evaluate_model(y_true, y_pred, model_name):
@@ -227,7 +205,6 @@ def evaluate_model(y_true, y_pred, model_name):
 evaluate_model(y_test, y_pred_lr, "Logistic Regression")
 evaluate_model(y_test, y_pred_rf, "Random Forest")
 
-# Feature Importance
 feature_importances = pd.DataFrame({
     'Feature': X.columns,
     'Importance': rf.feature_importances_
@@ -236,7 +213,6 @@ feature_importances = pd.DataFrame({
 print("\nTop 10 Important Features:")
 print(feature_importances.head(10).to_string(index=False))
 
-# Business metrics 
 print("\n Business metrics:")
 print("\n- Recommended metric: Weekly Precision (Minimize false positives)")
 print("- Current precision: 76% (Random Forest)")
@@ -247,7 +223,6 @@ print("- Track precision weekly using A/B testing")
 print("- Alert if precision drops below 75%")
 print("- Review false positives monthly to identify patterns")
 
-# Some recommendations
 print("\nSome of the recommendations I suggest would be: ")
 print("1. Implement Random Forest model for recipe recommendations")
 print("2. Focus on recipes with:")
@@ -257,4 +232,5 @@ print("3. Monitor nutritional balance (protein/carb ratio)")
 print("4. Expand data collection to include:")
 print("   - Cooking time")
 print("   - User ratings")
+
 print("   - Seasonal trends")
